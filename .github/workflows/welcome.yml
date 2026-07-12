@@ -13,15 +13,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/first-interaction@v3
+      - uses: actions/github-script@v7
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = context.issue.number;
+            const author = context.payload.pull_request.user.login;
 
-          issue_message: |
-            Thanks for opening your first issue!
+            // Search for all PRs by this author in this repository.
+            // The current PR is already included in the search results.
+            const { data } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:pr author:${author}`
+            });
 
-          pr_message: |
-            👋 Hey @${{ github.event.pull_request.user.login }}, welcome and thanks for your first pull request!
+            console.log(`Found ${data.total_count} PR(s) from ${author}`);
 
-            Please read our Contributing Guide:
-            https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md
+            // If this is the only PR, it's their first.
+            if (data.total_count === 1) {
+
+              console.log("First-time contributor!");
+
+              // Add a label
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: ["first-time-contributor"]
+              });
+
+              // Leave a welcome comment
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: `👋 Hey @${author}, welcome and thanks for your first contribution!
+
+                We're excited to have you here.
+
+                Please take a look at our Contributing Guide:
+                https://github.com/${owner}/${repo}/blob/main/CONTRIBUTING.md`
+              });
+
+            } else {
+              console.log("Not a first-time contributor.");
+            }
