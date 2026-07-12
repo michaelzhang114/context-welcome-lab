@@ -5,21 +5,23 @@ on:
     types: [opened]
 
 permissions:
-  pull-requests: write
   issues: write
+  pull-requests: write
 
 jobs:
   welcome:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Welcome first-time contributors
-        uses: actions/first-interaction@v3
+      - uses: actions/first-interaction@v3
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          pr-message: |
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+          issue_message: |
+            Thanks for opening your first issue!
+
+          pr_message: |
             👋 Hey @${{ github.event.pull_request.user.login }}, welcome and thanks for your first pull request!
 
-            We're excited to have you here. Before we review your changes, please take a look at our Contributing Guide:
-
+            Please read our Contributing Guide:
             https://github.com/${{ github.repository }}/blob/main/CONTRIBUTING.md
